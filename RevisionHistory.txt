@@ -1,0 +1,4 @@
+VSProjNuGetVersionUpdater Revision History
+
+Version 1.0.6306; April 7, 2017
+	- Initial release
