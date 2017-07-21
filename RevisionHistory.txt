@@ -1,4 +1,8 @@
 VSProjNuGetVersionUpdater Revision History
 
+Version 1.0.6410; July 20, 2017
+	- Use XmlWriter.Create instead of XmlTextWriter to force \r\n to be used for every line
+		- When XmlTextWriter writes out commented XML, it only writes \n, resulting in a file with mixed linefeeds
+
 Version 1.0.6306; April 7, 2017
 	- Initial release

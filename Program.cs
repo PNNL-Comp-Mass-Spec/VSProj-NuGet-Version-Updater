@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -24,7 +23,7 @@ namespace VSProjNuGetVersionUpdater
     /// </remarks>
     internal static class Program
     {
-        public const string PROGRAM_DATE = "April 7, 2017";
+        public const string PROGRAM_DATE = "July 20, 2017";
 
         private struct udtPackageUpdateOptions
         {
@@ -218,9 +217,17 @@ namespace VSProjNuGetVersionUpdater
                 if (!saveRequired)
                     return;
 
-                using (var writer = new XmlTextWriter(projectFile.FullName, Encoding.UTF8))
+                var settings = new XmlWriterSettings
                 {
-                    writer.Formatting = Formatting.Indented;
+                    NewLineChars = "\r\n",
+                    NewLineHandling = NewLineHandling.Replace,
+                    Encoding = Encoding.UTF8,
+                    Indent = true,
+                    IndentChars = "  "
+                };
+
+                using (var writer = XmlWriter.Create(projectFile.FullName, settings))
+                {
                     doc.Save(writer);
                 }
 
