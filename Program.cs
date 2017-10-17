@@ -513,57 +513,18 @@ namespace VSProjNuGetVersionUpdater
 
         private static void ShowDebugMessage(string message)
         {
-            Console.ForegroundColor = ConsoleColor.Gray;
-            Console.WriteLine(message);
-            Console.ResetColor();
+            ConsoleMsgUtils.ShowDebug(message);
         }
 
         private static void ShowErrorMessage(string message, Exception ex = null)
         {
 
-            const string separator = "------------------------------------------------------------------------------";
-
-            Console.WriteLine();
-            Console.WriteLine(separator);
-
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(message);
-
-            if (ex != null)
-            {
-                Console.ForegroundColor = ConsoleColor.Gray;
-                Console.WriteLine(PRISM.clsStackTraceFormatter.GetExceptionStackTraceMultiLine(ex));
-            }
-
-            Console.ResetColor();
-            Console.WriteLine(separator);
-            Console.WriteLine();
-
-            WriteToErrorStream(message);
+            ConsoleMsgUtils.ShowError(message, ex);
         }
 
-        private static void ShowErrorMessage(string title, IEnumerable<string> items)
+        private static void ShowErrorMessage(string title, IEnumerable<string> errorMessages)
         {
-            const string separator = "------------------------------------------------------------------------------";
-
-            Console.WriteLine();
-            Console.WriteLine(separator);
-
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(title);
-            var message = title + ":";
-
-            foreach (var item in items)
-            {
-                Console.WriteLine("   " + item);
-                message += " " + item;
-            }
-
-            Console.ResetColor();
-            Console.WriteLine(separator);
-            Console.WriteLine();
-
-            WriteToErrorStream(message);
+            ConsoleMsgUtils.ShowErrors(title, errorMessages);
         }
 
         private static void ShowProcessingFileMessage(FileInfo projectFile, string baseFolderPath)
@@ -633,26 +594,9 @@ namespace VSProjNuGetVersionUpdater
         private static void ShowWarning(string message)
         {
 
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine(message);
-            Console.ResetColor();
+            ConsoleMsgUtils.ShowWarning(message);
         }
 
-        private static void WriteToErrorStream(string errorMessage)
-        {
-            try
-            {
-                using (var swErrorStream = new System.IO.StreamWriter(Console.OpenStandardError()))
-                {
-                    swErrorStream.WriteLine(errorMessage);
-                }
-            }
-            // ReSharper disable once EmptyGeneralCatchClause
-            catch
-            {
-                // Ignore errors here
-            }
-        }
 
     }
 }
