@@ -231,11 +231,89 @@ namespace VSProjNuGetVersionUpdater
                     doc.Save(writer);
                 }
 
+                // Reopen the file and add back linefeeds to pairs of XML tags
+                // that the XmlWriter puts on one line yet Visual Studio puts on two lines
+
+                UpdateEmptyXMLTagFormatting(projectFile);
+
             }
             catch (Exception ex)
             {
                 ShowErrorMessage("Error processing " + projectFile.FullName + ": " + ex.Message);
             }
+        }
+
+        /// <summary>
+        /// Update formatting of XML tags to match the formatting that Visual Studio uses
+        /// </summary>
+        /// <param name="projectFile"></param>
+        private static void UpdateEmptyXMLTagFormatting(FileSystemInfo projectFile)
+        {
+
+            try
+            {
+                // Reopen the file and add back linefeeds to pairs of XML tags
+                // that the XmlWriter puts on one line yet Visual Studio puts on two lines
+                // For example, change from
+                //    <FileUpgradeFlags></FileUpgradeFlags>
+                // to
+                //    <FileUpgradeFlags>
+                //    </FileUpgradeFlags>
+
+                var tempFile = new FileInfo(Path.Combine(Path.GetTempPath(), projectFile.Name + ".tmp"));
+
+                if (tempFile.Exists)
+                    tempFile.Delete();
+
+                var reEmptyNodePair = new Regex(@"^(?<Whitespace>\W*)<(?<OpenTag>[^>]+)></(?<CloseTag>[^>]+)>", RegexOptions.Compiled);
+
+                var updateRequired = false;
+
+                using (var reader = new StreamReader(new FileStream(projectFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(tempFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                {
+                    while (!reader.EndOfStream)
+                    {
+                        var lineIn = reader.ReadLine();
+                        if (lineIn == null)
+                            continue;
+
+                        var match = reEmptyNodePair.Match(lineIn);
+                        if (!match.Success)
+                        {
+                            writer.WriteLine(lineIn);
+                            continue;
+                        }
+
+                        if (!string.Equals(match.Groups["OpenTag"].Value, match.Groups["CloseTag"].Value))
+                        {
+                            ShowWarning("Unbalanced XML tag pair: " + lineIn);
+                            continue;
+                        }
+
+                        writer.WriteLine(match.Groups["Whitespace"].Value + "<" + match.Groups["OpenTag"].Value + ">");
+                        writer.WriteLine(match.Groups["Whitespace"].Value + "</"+ match.Groups["CloseTag"].Value + ">");
+
+                        updateRequired = true;
+                    }
+                }
+
+                if (updateRequired)
+                {
+                    projectFile.Delete();
+                    tempFile.MoveTo(projectFile.FullName);
+                }
+                else
+                {
+                    tempFile.Delete();
+                }
+
+            }
+            catch (Exception ex)
+            {
+                ShowErrorMessage("Error updating XML tag formatting in file " + projectFile.FullName + ": " + ex.Message);
+            }
+
         }
 
         private static bool SearchForProjectFiles(
