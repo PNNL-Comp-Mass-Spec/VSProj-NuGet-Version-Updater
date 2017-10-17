@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
@@ -23,7 +24,7 @@ namespace VSProjNuGetVersionUpdater
     /// </remarks>
     internal static class Program
     {
-        public const string PROGRAM_DATE = "July 20, 2017";
+        public const string PROGRAM_DATE = "October 17, 2017";
 
         private struct udtPackageUpdateOptions
         {
@@ -126,7 +127,7 @@ namespace VSProjNuGetVersionUpdater
 
         }
 
-        private static void ProcessProjectFile(FileInfo projectFile, string baseFolderPath, udtPackageUpdateOptions updateOptions)
+        private static void ProcessProjectFile(FileSystemInfo projectFile, string baseFolderPath, udtPackageUpdateOptions updateOptions)
         {
             try
             {
@@ -239,7 +240,7 @@ namespace VSProjNuGetVersionUpdater
             }
             catch (Exception ex)
             {
-                ShowErrorMessage("Error processing " + projectFile.FullName + ": " + ex.Message);
+                ShowErrorMessage("Error processing file " + projectFile.FullName + ": " + ex.Message);
             }
         }
 
@@ -417,7 +418,7 @@ namespace VSProjNuGetVersionUpdater
                         Console.WriteLine();
                         mProgressNewlineRequired = false;
                     }
-                    ShowWarning("Error processing " + subDirectory.FullName + "; will continue searching");
+                    ShowWarning("Error processing directory " + subDirectory.FullName + "; will continue searching");
                     successOverall = false;
                 }
 
@@ -527,7 +528,7 @@ namespace VSProjNuGetVersionUpdater
             ConsoleMsgUtils.ShowErrors(title, errorMessages);
         }
 
-        private static void ShowProcessingFileMessage(FileInfo projectFile, string baseFolderPath)
+        private static void ShowProcessingFileMessage(FileSystemInfo projectFile, string baseFolderPath)
         {
 
             string projectFilePath;

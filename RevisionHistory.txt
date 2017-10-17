@@ -1,5 +1,9 @@
 VSProjNuGetVersionUpdater Revision History
 
+Version 1.0.6499; October 17, 2017
+	- Assure that pairs of empty XML tags are on separate lines
+		- This is consistent with how Visual Studio creates csproj and vbproj files
+
 Version 1.0.6410; July 20, 2017
 	- Use XmlWriter.Create instead of XmlTextWriter to force \r\n to be used for every line
 		- When XmlTextWriter writes out commented XML, it only writes \n, resulting in a file with mixed linefeeds
