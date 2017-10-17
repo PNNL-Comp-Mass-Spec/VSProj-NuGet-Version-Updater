@@ -8,5 +8,5 @@ build:
   project: VSProjNuGetVersionUpdater.sln
   verbosity: minimal
 artifacts:
-- path: bin\Release\VSProjNuGetVersionUpdater.exe
-- path: bin\Release\*.dll
+- path: bin\Release
+  name: VSProjNuGetVersionUpdater
