@@ -1,5 +1,8 @@
 VSProjNuGetVersionUpdater Revision History
 
+Version 1.0.6862; October 15, 2018
+	- Add support for <PackageReference /> elements that define Version with an attribute instead of an element
+
 Version 1.0.6499; October 17, 2017
 	- Assure that pairs of empty XML tags are on separate lines
 		- This is consistent with how Visual Studio creates csproj and vbproj files

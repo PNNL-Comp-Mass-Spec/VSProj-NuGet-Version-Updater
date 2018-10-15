@@ -24,7 +24,7 @@ namespace VSProjNuGetVersionUpdater
     /// </remarks>
     internal static class Program
     {
-        public const string PROGRAM_DATE = "October 17, 2017";
+        public const string PROGRAM_DATE = "October 15, 2018";
 
         private struct PackageUpdateOptions
         {
@@ -159,8 +159,11 @@ namespace VSProjNuGetVersionUpdater
                 // Open the Visual Studio project file and look for XML like this:
                 //
                 //  <PackageReference Include="PRISM-Library">
-                //     <Version>1.0.2</Version>
+                //     <Version>2.4.93</Version>
                 //  </PackageReference>
+
+                // Or like this
+                //  <PackageReference Include="PRISM-Library" Version="2.4.93" />
 
                 var saveRequired = false;
 
@@ -236,7 +239,7 @@ namespace VSProjNuGetVersionUpdater
                     doc.Save(writer);
                 }
 
-                // Reopen the file and add back linefeeds to pairs of XML tags
+                // Reopen the file and add back line feeds to pairs of XML tags
                 // that the XmlWriter puts on one line yet Visual Studio puts on two lines
 
                 UpdateEmptyXMLTagFormatting(projectFile);
@@ -272,7 +275,7 @@ namespace VSProjNuGetVersionUpdater
 
             try
             {
-                // Reopen the file and add back linefeeds to pairs of XML tags
+                // Reopen the file and add back line feeds to pairs of XML tags
                 // that the XmlWriter puts on one line yet Visual Studio puts on two lines
                 // For example, change from
                 //    <FileUpgradeFlags></FileUpgradeFlags>
