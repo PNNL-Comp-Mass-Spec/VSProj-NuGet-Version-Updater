@@ -168,7 +168,7 @@ namespace VSProjNuGetVersionUpdater
 
                 foreach (var packageRef in doc.Descendants().Where(p => p.Name.LocalName == "PackageReference"))
                 {
-                    if (!packageRef.HasAttributes || !packageRef.HasElements)
+                    if (!packageRef.HasAttributes)
                         continue;
 
                     var refName = (string)packageRef.Attribute("Include");
@@ -202,9 +202,17 @@ namespace VSProjNuGetVersionUpdater
                         versionElementFound = true;
                     }
 
+                    if (versionElementFound || !packageRef.HasAttributes)
+                        continue;
 
+                    var versionAttribute = packageRef.Attribute("Version");
+                    if (versionAttribute != null)
+                    {
 
+                        // Found XML like this:
+                        // <PackageReference Include="PRISM-Library" Version="2.4.93" />
 
+                        saveRequired = UpdateVersionAttributeIfRequired(versionAttribute, updateOptions);
                     }
                 }
 
@@ -328,6 +336,21 @@ namespace VSProjNuGetVersionUpdater
 
         }
 
+        private static bool UpdateVersionAttributeIfRequired(XAttribute versionAttribute, PackageUpdateOptions updateOptions)
+        {
+            var currentVersion = versionAttribute.Value;
+
+            var updateVersion = IsUpdateRequired(currentVersion, updateOptions, out var parsedVersion);
+
+            if (!updateVersion)
+                return false;
+
+            versionAttribute.Value = updateOptions.NewPackageVersion.ToString();
+
+            ShowUpdateInfo(updateOptions, parsedVersion);
+
+            return true;
+        }
 
         private static bool UpdateVersionElementIfRequired(XElement element, PackageUpdateOptions updateOptions)
         {
