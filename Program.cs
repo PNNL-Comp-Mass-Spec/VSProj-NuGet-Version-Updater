@@ -19,8 +19,8 @@ namespace VSProjNuGetVersionUpdater
     /// <remarks>
     /// Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
     ///
-    /// E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com
-    /// Website: http://panomics.pnnl.gov/ or http://omics.pnl.gov or http://www.sysbio.org/resources/staff/
+    /// E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov
+    /// Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/
     /// </remarks>
     internal static class Program
     {
@@ -552,16 +552,19 @@ namespace VSProjNuGetVersionUpdater
             try
             {
                 Console.WriteLine();
-                Console.WriteLine("This program searches for Visual Studio project files (.csproj and.vsproj) " +
-                                  "that reference a specific NuGet package and updates the referenced version " +
-                                  "to a newer version if necessary");
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                                      "This program searches for Visual Studio project files (.csproj and.vsproj) " +
+                                      "that reference a specific NuGet package and updates the referenced version " +
+                                      "to a newer version if necessary"));
                 Console.WriteLine();
                 Console.WriteLine("Program syntax:" + Environment.NewLine + exeName);
-                Console.WriteLine(" FolderPath /Package:PackageName /Version:PackageVersion");
+                Console.WriteLine(" DirectoryPath /Package:PackageName /Version:PackageVersion");
                 Console.WriteLine(" [/S] [/Apply] [/Rollback] [/Verbose]");
                 Console.WriteLine();
-                Console.WriteLine("FolderPath is the path to the folder to search for Visual Studio project files");
-                Console.WriteLine("If FolderPath is not specified, the current folder is used");
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                                      "DirectoryPath is the path to the directory to search for Visual Studio project files. " +
+                                      "If DirectoryPath is not specified, the current directory is used"));
+                Console.WriteLine();
                 Console.WriteLine("Use /S to recurse subdirectories");
                 Console.WriteLine();
                 Console.WriteLine("Specify the NuGet package name using /Package or using /P");
@@ -577,8 +580,8 @@ namespace VSProjNuGetVersionUpdater
                 Console.WriteLine("Version: " + GetAppVersion());
                 Console.WriteLine();
 
-                Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com");
-                Console.WriteLine("Website: http://panomics.pnnl.gov/ or http://omics.pnl.gov or http://www.sysbio.org/resources/staff/");
+                Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov");
+                Console.WriteLine("Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/");
                 Console.WriteLine();
 
                 // Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
