@@ -126,7 +126,33 @@ namespace VSProjNuGetVersionUpdater
 
         }
 
-        private static void ProcessProjectFile(FileSystemInfo projectFile, string baseFolderPath, udtPackageUpdateOptions updateOptions)
+        private static bool IsUpdateRequired(string currentVersion, PackageUpdateOptions updateOptions, out Version parsedVersion)
+        {
+            parsedVersion = Version.Parse(currentVersion);
+
+            if (parsedVersion < updateOptions.NewPackageVersion)
+            {
+                // Version in the project file is older; update it
+                return true;
+            }
+
+            if (parsedVersion == updateOptions.NewPackageVersion)
+            {
+                // Already up-to-date
+                ShowDebugMessage(string.Format("    version is already up-to-date: {0}", parsedVersion), 0);
+                return false;
+            }
+
+            // Version in the project file is newer; only update if Rollback is enabled
+            if (updateOptions.Rollback)
+                return true;
+
+            ShowWarning(string.Format("    referenced version {0} is newer than {1}; will not update",
+                                      parsedVersion, updateOptions.NewPackageVersion), 0);
+            return false;
+        }
+
+        private static void ProcessProjectFile(FileSystemInfo projectFile, string baseDirectoryPath, PackageUpdateOptions updateOptions)
         {
             try
             {
@@ -159,55 +185,26 @@ namespace VSProjNuGetVersionUpdater
                         ShowProcessingFileMessage(projectFile, baseDirectoryPath);
 
                     // Examine the version
+                    var versionElementFound = false;
 
                     foreach (var element in packageRef.Elements())
                     {
                         if (element.Name.LocalName != "Version")
                             continue;
 
-                        var currentVersion = element.Value;
-                        var parsedVersion = Version.Parse(currentVersion);
-                        var updateVersion = false;
+                        // Found XML like this:
+                        // <PackageReference Include="PRISM-Library">
+                        //   <Version>2.5.2</Version>
+                        // </PackageReference>
 
-                        if (parsedVersion < updateOptions.NewPackageVersion)
-                        {
-                            // Version in the project file is older; update it
-                            updateVersion = true;
+                        saveRequired = UpdateVersionElementIfRequired(element, updateOptions);
 
-                        }
-                        else if (parsedVersion == updateOptions.NewPackageVersion)
-                        {
-                            // Already up-to-date
-                            ShowDebugMessage(string.Format("    version is already up-to-date: {0}", parsedVersion));
-                        }
-                        else
-                        {
-                            // Version in the project file is newer; only update if Rollback is enabled
-                            if (updateOptions.Rollback)
-                                updateVersion = true;
-                            else
-                                ShowWarning(string.Format("    referenced version {0} is newer than {1}; will not update",
-                                    parsedVersion, updateOptions.NewPackageVersion));
-                        }
+                        versionElementFound = true;
+                    }
 
-                        if (!updateVersion)
-                            continue;
 
-                        element.Value = updateOptions.NewPackageVersion.ToString();
 
-                        string updateVerb;
-                        if (updateOptions.Preview)
-                            updateVerb = "would update";
-                        else
-                            updateVerb = "updating";
 
-                        ShowWarning(string.Format("    {0} version from {1} to {2} for {3}",
-                                                       updateVerb,
-                                                       parsedVersion,
-                                                       updateOptions.NewPackageVersion,
-                                                       updateOptions.NuGetPackageName));
-
-                        saveRequired = true;
                     }
                 }
 
@@ -241,6 +238,21 @@ namespace VSProjNuGetVersionUpdater
             {
                 ShowErrorMessage("Error processing file " + projectFile.FullName + ": " + ex.Message);
             }
+        }
+
+        private static void ShowUpdateInfo(PackageUpdateOptions updateOptions, Version parsedVersion)
+        {
+            string updateVerb;
+            if (updateOptions.Preview)
+                updateVerb = "would update";
+            else
+                updateVerb = "updating";
+
+            ShowWarning(string.Format("      {0} version from {1} to {2} for {3}",
+                                      updateVerb,
+                                      parsedVersion,
+                                      updateOptions.NewPackageVersion,
+                                      updateOptions.NuGetPackageName), 0);
         }
 
         /// <summary>
@@ -314,6 +326,23 @@ namespace VSProjNuGetVersionUpdater
                 ShowErrorMessage("Error updating XML tag formatting in file " + projectFile.FullName + ": " + ex.Message);
             }
 
+        }
+
+
+        private static bool UpdateVersionElementIfRequired(XElement element, PackageUpdateOptions updateOptions)
+        {
+            var currentVersion = element.Value;
+
+            var updateVersion = IsUpdateRequired(currentVersion, updateOptions, out var parsedVersion);
+
+            if (!updateVersion)
+                return false;
+
+            element.Value = updateOptions.NewPackageVersion.ToString();
+
+            ShowUpdateInfo(updateOptions, parsedVersion);
+
+            return true;
         }
 
         private static bool SearchForProjectFiles(
