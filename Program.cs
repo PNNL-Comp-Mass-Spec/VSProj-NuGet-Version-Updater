@@ -26,7 +26,7 @@ namespace VSProjNuGetVersionUpdater
     {
         public const string PROGRAM_DATE = "October 17, 2017";
 
-        private struct udtPackageUpdateOptions
+        private struct PackageUpdateOptions
         {
             public string NuGetPackageName;
             public string NuGetPackageVersion;
@@ -36,10 +36,10 @@ namespace VSProjNuGetVersionUpdater
             public Version NewPackageVersion { get; set; }
         }
 
-        private static string mSearchFolderPath;
+        private static string mSearchDirectoryPath;
         private static bool mRecurse;
 
-        private static udtPackageUpdateOptions mUpdateOptions;
+        private static PackageUpdateOptions mUpdateOptions;
 
         private static bool mVerboseLogging;
 
@@ -50,12 +50,12 @@ namespace VSProjNuGetVersionUpdater
 
         static int Main(string[] args)
         {
-            var objParseCommandLine = new clsParseCommandLine();
+            var commandLineParse = new clsParseCommandLine();
 
-            mSearchFolderPath = ".";
+            mSearchDirectoryPath = ".";
             mRecurse = false;
 
-            mUpdateOptions = new udtPackageUpdateOptions
+            mUpdateOptions = new PackageUpdateOptions
             {
                 NuGetPackageName = "",
                 NuGetPackageVersion = "",
@@ -70,22 +70,22 @@ namespace VSProjNuGetVersionUpdater
 
                 var success = false;
 
-                if (objParseCommandLine.ParseCommandLine())
+                if (commandLineParse.ParseCommandLine())
                 {
-                    if (SetOptionsUsingCommandLineParameters(objParseCommandLine))
+                    if (SetOptionsUsingCommandLineParameters(commandLineParse))
                         success = true;
                 }
 
                 if (!success ||
-                    objParseCommandLine.NeedToShowHelp)
+                    commandLineParse.NeedToShowHelp)
                 {
                     ShowProgramHelp();
                     return -1;
                 }
 
-                if (string.IsNullOrWhiteSpace(mSearchFolderPath))
+                if (string.IsNullOrWhiteSpace(mSearchDirectoryPath))
                 {
-                    mSearchFolderPath = ".";
+                    mSearchDirectoryPath = ".";
                 }
 
 
@@ -101,7 +101,7 @@ namespace VSProjNuGetVersionUpdater
                     return -4;
                 }
 
-                success = SearchForProjectFiles(mSearchFolderPath, mRecurse, mUpdateOptions);
+                success = SearchForProjectFiles(mSearchDirectoryPath, mRecurse, mUpdateOptions);
 
                 if (!success)
                 {
@@ -157,7 +157,7 @@ namespace VSProjNuGetVersionUpdater
                         continue;
 
                     if (!mVerboseLogging)
-                        ShowProcessingFileMessage(projectFile, baseFolderPath);
+                        ShowProcessingFileMessage(projectFile, baseDirectoryPath);
 
                     // Examine the version
 
@@ -318,9 +318,9 @@ namespace VSProjNuGetVersionUpdater
         }
 
         private static bool SearchForProjectFiles(
-            string searchFolderPath,
+            string searchDirectoryPath,
             bool recurse,
-            udtPackageUpdateOptions updateOptions)
+            PackageUpdateOptions updateOptions)
         {
 
             try
@@ -337,46 +337,46 @@ namespace VSProjNuGetVersionUpdater
 
             try
             {
-                if (string.IsNullOrWhiteSpace(searchFolderPath))
-                    searchFolderPath = ".";
+                if (string.IsNullOrWhiteSpace(searchDirectoryPath))
+                    searchDirectoryPath = ".";
 
-                var searchFolder = new DirectoryInfo(searchFolderPath);
+                var searchDirectory = new DirectoryInfo(searchDirectoryPath);
 
                 Console.WriteLine("Searching for Visual Studio projects referencing {0} to assure each uses version {1}",
                     updateOptions.NuGetPackageName, updateOptions.NuGetPackageVersion);
 
                 if (recurse)
-                    Console.WriteLine("Searching {0} and subdirectories", searchFolder);
+                    Console.WriteLine("Searching {0} and subdirectories", searchDirectory);
                 else
-                    Console.WriteLine("Only search {0} -- to recurse, use /S", searchFolder);
+                    Console.WriteLine("Only search {0} -- to recurse, use /S", searchDirectory);
 
-                var baseFolderPath = searchFolder.Parent?.FullName ?? string.Empty;
+                var baseDirectoryPath = searchDirectory.Parent?.FullName ?? string.Empty;
                 mLastProgressTime = DateTime.Now;
                 mProgressNewlineRequired = false;
 
-                var success = SearchForProjectFiles(searchFolder, baseFolderPath, recurse, updateOptions);
+                var success = SearchForProjectFiles(searchDirectory, baseDirectoryPath, recurse, updateOptions);
 
                 return success;
             }
             catch (Exception ex)
             {
-                ShowErrorMessage("Error instantiating a DirectoryInfo object for " + searchFolderPath + ": " + ex.Message);
+                ShowErrorMessage("Error instantiating a DirectoryInfo object for " + searchDirectoryPath + ": " + ex.Message);
                 return false;
             }
         }
 
         private static bool SearchForProjectFiles(
-            DirectoryInfo searchFolder,
-            string baseFolderPath,
+            DirectoryInfo searchDirectory,
+            string baseDirectoryPath,
             bool recurse,
-            udtPackageUpdateOptions updateOptions)
+            PackageUpdateOptions updateOptions)
         {
 
             try
             {
 
-                var projectFiles = searchFolder.GetFiles("*.csproj").ToList();
-                projectFiles.AddRange(searchFolder.GetFiles("*.vbproj"));
+                var projectFiles = searchDirectory.GetFiles("*.csproj").ToList();
+                projectFiles.AddRange(searchDirectory.GetFiles("*.vbproj"));
 
                 if (recurse && DateTime.Now.Subtract(mLastProgressTime).TotalMilliseconds > 200)
                 {
@@ -396,9 +396,9 @@ namespace VSProjNuGetVersionUpdater
                     mLastProgressTime = DateTime.Now;
 
                     if (mVerboseLogging)
-                        ShowProcessingFileMessage(projectFile, baseFolderPath);
+                        ShowProcessingFileMessage(projectFile, baseDirectoryPath);
 
-                    ProcessProjectFile(projectFile, baseFolderPath, updateOptions);
+                    ProcessProjectFile(projectFile, baseDirectoryPath, updateOptions);
                 }
 
                 if (!recurse)
@@ -406,9 +406,9 @@ namespace VSProjNuGetVersionUpdater
 
                 var successOverall = true;
 
-                foreach (var subDirectory in searchFolder.GetDirectories())
+                foreach (var subDirectory in searchDirectory.GetDirectories())
                 {
-                    var success = SearchForProjectFiles(subDirectory, baseFolderPath, true, updateOptions);
+                    var success = SearchForProjectFiles(subDirectory, baseDirectoryPath, true, updateOptions);
 
                     if (success)
                         continue;
@@ -436,7 +436,7 @@ namespace VSProjNuGetVersionUpdater
             return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version + " (" + PROGRAM_DATE + ")";
         }
 
-        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine objParseCommandLine)
+        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParse)
         {
             // Returns True if no problems; otherwise, returns false
             var lstValidParameters = new List<string> {
@@ -445,10 +445,10 @@ namespace VSProjNuGetVersionUpdater
             try
             {
                 // Make sure no invalid parameters are present
-                if (objParseCommandLine.InvalidParametersPresent(lstValidParameters))
+                if (commandLineParse.InvalidParametersPresent(lstValidParameters))
                 {
                     var badArguments = new List<string>();
-                    foreach (var item in objParseCommandLine.InvalidParameters(lstValidParameters))
+                    foreach (var item in commandLineParse.InvalidParameters(lstValidParameters))
                     {
                         badArguments.Add("/" + item);
                     }
@@ -458,48 +458,46 @@ namespace VSProjNuGetVersionUpdater
                     return false;
                 }
 
-                // Query objParseCommandLine to see if various parameters are present
-                if (objParseCommandLine.NonSwitchParameterCount > 0)
+                // Query commandLineParse to see if various parameters are present
+                if (commandLineParse.NonSwitchParameterCount > 0)
                 {
-                    mSearchFolderPath = objParseCommandLine.RetrieveNonSwitchParameter(0);
+                    mSearchDirectoryPath = commandLineParse.RetrieveNonSwitchParameter(0);
                 }
 
 
-                string paramValue;
-
-                if (objParseCommandLine.RetrieveValueForParameter("I", out paramValue))
+                if (commandLineParse.RetrieveValueForParameter("I", out var paramValue))
                 {
-                    mSearchFolderPath = string.Copy(paramValue);
+                    mSearchDirectoryPath = string.Copy(paramValue);
                 }
 
-                if (objParseCommandLine.RetrieveValueForParameter("Package", out paramValue))
+                if (commandLineParse.RetrieveValueForParameter("Package", out paramValue))
                 {
                     mUpdateOptions.NuGetPackageName = paramValue;
                 }
-                else if (objParseCommandLine.RetrieveValueForParameter("P", out paramValue))
+                else if (commandLineParse.RetrieveValueForParameter("P", out paramValue))
                 {
                     mUpdateOptions.NuGetPackageName = paramValue;
                 }
 
-                if (objParseCommandLine.RetrieveValueForParameter("Version", out paramValue))
+                if (commandLineParse.RetrieveValueForParameter("Version", out paramValue))
                 {
                     mUpdateOptions.NuGetPackageVersion = paramValue;
                 }
-                else if (objParseCommandLine.RetrieveValueForParameter("V", out paramValue))
+                else if (commandLineParse.RetrieveValueForParameter("V", out paramValue))
                 {
                     mUpdateOptions.NuGetPackageVersion = paramValue;
                 }
 
-                if (objParseCommandLine.IsParameterPresent("Apply"))
+                if (commandLineParse.IsParameterPresent("Apply"))
                     mUpdateOptions.Preview = false;
 
-                if (objParseCommandLine.IsParameterPresent("Rollback"))
+                if (commandLineParse.IsParameterPresent("Rollback"))
                     mUpdateOptions.Rollback = true;
 
-                if (objParseCommandLine.IsParameterPresent("S"))
+                if (commandLineParse.IsParameterPresent("S"))
                     mRecurse = true;
 
-                if (objParseCommandLine.IsParameterPresent("Verbose"))
+                if (commandLineParse.IsParameterPresent("Verbose"))
                     mVerboseLogging = true;
 
                 return true;
@@ -528,14 +526,14 @@ namespace VSProjNuGetVersionUpdater
             ConsoleMsgUtils.ShowErrors(title, errorMessages);
         }
 
-        private static void ShowProcessingFileMessage(FileSystemInfo projectFile, string baseFolderPath)
+        private static void ShowProcessingFileMessage(FileSystemInfo projectFile, string baseDirectoryPath)
         {
 
             string projectFilePath;
 
-            if (!string.IsNullOrWhiteSpace(baseFolderPath))
+            if (!string.IsNullOrWhiteSpace(baseDirectoryPath))
             {
-                projectFilePath = projectFile.FullName.Substring(baseFolderPath.Length).TrimStart('\\');
+                projectFilePath = projectFile.FullName.Substring(baseDirectoryPath.Length).TrimStart('\\');
             }
             else
             {
