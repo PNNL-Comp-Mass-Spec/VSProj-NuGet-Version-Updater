@@ -117,8 +117,7 @@ namespace VSProjNuGetVersionUpdater
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error occurred in Program->Main: " + Environment.NewLine + ex.Message);
-                Console.WriteLine(ex.StackTrace);
+                ShowErrorMessage("Error occurred in Program->Main", ex);
                 Thread.Sleep(1500);
                 return -1;
             }
@@ -433,7 +432,7 @@ namespace VSProjNuGetVersionUpdater
 
         private static string GetAppVersion()
         {
-            return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version + " (" + PROGRAM_DATE + ")";
+            return PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppVersion(PROGRAM_DATE);
         }
 
         private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParse)
@@ -504,15 +503,15 @@ namespace VSProjNuGetVersionUpdater
             }
             catch (Exception ex)
             {
-                ShowErrorMessage("Error parsing the command line parameters: " + Environment.NewLine + ex.Message);
+                ShowErrorMessage("Error parsing the command line parameters", ex);
             }
 
             return false;
         }
 
-        private static void ShowDebugMessage(string message)
+        private static void ShowDebugMessage(string message, int emptyLinesBeforeMessage = 1)
         {
-            ConsoleMsgUtils.ShowDebug(message);
+            ConsoleMsgUtils.ShowDebug(message, "  ", emptyLinesBeforeMessage);
         }
 
         private static void ShowErrorMessage(string message, Exception ex = null)
@@ -593,12 +592,11 @@ namespace VSProjNuGetVersionUpdater
 
         }
 
-        private static void ShowWarning(string message)
+        private static void ShowWarning(string message, int emptyLinesBeforeMessage = 1)
         {
 
-            ConsoleMsgUtils.ShowWarning(message);
+            ConsoleMsgUtils.ShowWarning(message, emptyLinesBeforeMessage);
         }
-
 
     }
 }
