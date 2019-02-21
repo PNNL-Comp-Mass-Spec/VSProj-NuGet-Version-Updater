@@ -14,7 +14,8 @@ namespace VSProjNuGetVersionUpdater
     /// <summary>
     /// This program searches for Visual Studio project files (.csproj and.vsproj)
     /// that reference a specific NuGet package and updates the referenced version
-    /// to a newer version if necessary
+    /// to a newer version if necessary.
+    /// It also updates packages.config files.
     /// </summary>
     /// <remarks>
     /// Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
@@ -24,7 +25,7 @@ namespace VSProjNuGetVersionUpdater
     /// </remarks>
     internal static class Program
     {
-        public const string PROGRAM_DATE = "October 15, 2018";
+        public const string PROGRAM_DATE = "February 21, 2019";
 
         private struct PackageUpdateOptions
         {
@@ -152,6 +153,67 @@ namespace VSProjNuGetVersionUpdater
             return false;
         }
 
+        private static void ProcessPackageConfigFile(FileSystemInfo packageConfigFile, string baseDirectoryPath, PackageUpdateOptions updateOptions)
+        {
+            try
+            {
+                // Open the packages.config file and look for XML like this:
+                //
+                //  <package id="PRISM-Library" version="2.5.10" targetFramework="net451" />
+
+                var saveRequired = false;
+
+                var doc = XDocument.Load(packageConfigFile.FullName);
+
+                foreach (var packageRef in doc.Descendants().Where(p => p.Name.LocalName == "package"))
+                {
+                    if (!packageRef.HasAttributes)
+                        continue;
+
+                    var refName = (string)packageRef.Attribute("id");
+                    if (refName == null)
+                    {
+                        // The package element does not have attribute id
+                        continue;
+                    }
+
+                    if (!string.Equals(refName, updateOptions.NuGetPackageName, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    if (!mVerboseLogging)
+                        ShowProcessingFileMessage(packageConfigFile, baseDirectoryPath);
+
+                    // Examine the version
+                    var versionAttribute = packageRef.Attribute("version");
+                    if (versionAttribute == null)
+                    {
+                        // The package element does not have attribute version
+                        ConsoleMsgUtils.ShowWarning(string.Format(
+                                                        "package element has id=\"{0}\" but does not have version=\"x.y.z\": {1}",
+                                                        updateOptions.NuGetPackageName, packageConfigFile.FullName));
+                        continue;
+                    }
+
+                    // Found XML like this:
+                    // <package id="PRISM-Library" version="2.5.10" targetFramework="net451" />
+
+                    saveRequired = UpdateVersionAttributeIfRequired(versionAttribute, updateOptions);
+                }
+
+                if (updateOptions.Preview)
+                    return;
+
+                if (!saveRequired)
+                    return;
+
+                WriteXmlFile(packageConfigFile, doc);
+            }
+            catch (Exception ex)
+            {
+                ShowErrorMessage("Error processing file " + packageConfigFile.FullName + ": " + ex.Message);
+            }
+        }
+
         private static void ProcessProjectFile(FileSystemInfo projectFile, string baseDirectoryPath, PackageUpdateOptions updateOptions)
         {
             try
@@ -225,25 +287,7 @@ namespace VSProjNuGetVersionUpdater
                 if (!saveRequired)
                     return;
 
-                var settings = new XmlWriterSettings
-                {
-                    NewLineChars = "\r\n",
-                    NewLineHandling = NewLineHandling.Replace,
-                    Encoding = Encoding.UTF8,
-                    Indent = true,
-                    IndentChars = "  "
-                };
-
-                using (var writer = XmlWriter.Create(projectFile.FullName, settings))
-                {
-                    doc.Save(writer);
-                }
-
-                // Reopen the file and add back line feeds to pairs of XML tags
-                // that the XmlWriter puts on one line yet Visual Studio puts on two lines
-
-                UpdateEmptyXMLTagFormatting(projectFile);
-
+                WriteXmlFile(projectFile, doc);
             }
             catch (Exception ex)
             {
@@ -269,8 +313,8 @@ namespace VSProjNuGetVersionUpdater
         /// <summary>
         /// Update formatting of XML tags to match the formatting that Visual Studio uses
         /// </summary>
-        /// <param name="projectFile"></param>
-        private static void UpdateEmptyXMLTagFormatting(FileSystemInfo projectFile)
+        /// <param name="xmlFile"></param>
+        private static void UpdateEmptyXMLTagFormatting(FileSystemInfo xmlFile)
         {
 
             try
@@ -283,7 +327,7 @@ namespace VSProjNuGetVersionUpdater
                 //    <FileUpgradeFlags>
                 //    </FileUpgradeFlags>
 
-                var tempFile = new FileInfo(Path.Combine(Path.GetTempPath(), projectFile.Name + ".tmp"));
+                var tempFile = new FileInfo(Path.Combine(Path.GetTempPath(), xmlFile.Name + ".tmp"));
 
                 if (tempFile.Exists)
                     tempFile.Delete();
@@ -292,7 +336,7 @@ namespace VSProjNuGetVersionUpdater
 
                 var updateRequired = false;
 
-                using (var reader = new StreamReader(new FileStream(projectFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(xmlFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 using (var writer = new StreamWriter(new FileStream(tempFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
@@ -323,8 +367,8 @@ namespace VSProjNuGetVersionUpdater
 
                 if (updateRequired)
                 {
-                    projectFile.Delete();
-                    tempFile.MoveTo(projectFile.FullName);
+                    xmlFile.Delete();
+                    tempFile.MoveTo(xmlFile.FullName);
                 }
                 else
                 {
@@ -334,7 +378,7 @@ namespace VSProjNuGetVersionUpdater
             }
             catch (Exception ex)
             {
-                ShowErrorMessage("Error updating XML tag formatting in file " + projectFile.FullName + ": " + ex.Message);
+                ShowErrorMessage("Error updating XML tag formatting in file " + xmlFile.FullName + ": " + ex.Message);
             }
 
         }
@@ -455,6 +499,23 @@ namespace VSProjNuGetVersionUpdater
                     ProcessProjectFile(projectFile, baseDirectoryPath, updateOptions);
                 }
 
+                var packageConfigFiles = searchDirectory.GetFiles("packages.config").ToList();
+                foreach (var configFile in packageConfigFiles)
+                {
+                    if (mProgressNewlineRequired)
+                    {
+                        Console.WriteLine();
+                        mProgressNewlineRequired = false;
+                    }
+
+                    mLastProgressTime = DateTime.Now;
+
+                    if (mVerboseLogging)
+                        ShowProcessingFileMessage(configFile, baseDirectoryPath);
+
+                    ProcessPackageConfigFile(configFile, baseDirectoryPath, updateOptions);
+                }
+
                 if (!recurse)
                     return true;
 
@@ -485,6 +546,28 @@ namespace VSProjNuGetVersionUpdater
             }
         }
 
+        private static void WriteXmlFile(FileSystemInfo xmlFile, XDocument doc)
+        {
+            var settings = new XmlWriterSettings
+            {
+                NewLineChars = "\r\n",
+                NewLineHandling = NewLineHandling.Replace,
+                Encoding = Encoding.UTF8,
+                Indent = true,
+                IndentChars = "  "
+            };
+
+            using (var writer = XmlWriter.Create(xmlFile.FullName, settings))
+            {
+                doc.Save(writer);
+            }
+
+            // Reopen the file and add back line feeds to pairs of XML tags
+            // that the XmlWriter puts on one line yet Visual Studio puts on two lines
+
+            UpdateEmptyXMLTagFormatting(xmlFile);
+        }
+
         private static string GetAppVersion()
         {
             return PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppVersion(PROGRAM_DATE);
@@ -494,7 +577,7 @@ namespace VSProjNuGetVersionUpdater
         {
             // Returns True if no problems; otherwise, returns false
             var lstValidParameters = new List<string> {
-                "I", "P", "Package", "V", "Version", "Apply", "Rollback", "S", "Verbose"};
+                "I", "P", "Package", "V", "Version", "Preview", "Apply", "Rollback", "S", "Verbose"};
 
             try
             {
@@ -544,6 +627,9 @@ namespace VSProjNuGetVersionUpdater
 
                 if (commandLineParse.IsParameterPresent("Apply"))
                     mUpdateOptions.Preview = false;
+
+                if (commandLineParse.IsParameterPresent("Preview"))
+                    mUpdateOptions.Preview = true;
 
                 if (commandLineParse.IsParameterPresent("Rollback"))
                     mUpdateOptions.Rollback = true;
@@ -607,11 +693,11 @@ namespace VSProjNuGetVersionUpdater
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                                       "This program searches for Visual Studio project files (.csproj and.vsproj) " +
                                       "that reference a specific NuGet package and updates the referenced version " +
-                                      "to a newer version if necessary"));
+                                      "to a newer version if necessary.  It also updates packages.config files."));
                 Console.WriteLine();
                 Console.WriteLine("Program syntax:" + Environment.NewLine + exeName);
                 Console.WriteLine(" DirectoryPath /Package:PackageName /Version:PackageVersion");
-                Console.WriteLine(" [/S] [/Apply] [/Rollback] [/Verbose]");
+                Console.WriteLine(" [/S] [/Preview] [/Apply] [/Rollback] [/Verbose]");
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                                       "DirectoryPath is the path to the directory to search for Visual Studio project files. " +
@@ -622,10 +708,12 @@ namespace VSProjNuGetVersionUpdater
                 Console.WriteLine("Specify the NuGet package name using /Package or using /P");
                 Console.WriteLine("Specify the NuGet package version using /Version or using /V");
                 Console.WriteLine("");
-                Console.WriteLine("By default will not update files; use /Apply to save changes");
+                Console.WriteLine("By default will not update files (/Preview is implied)");
+                Console.WriteLine("Use /Apply to save changes");
+                Console.WriteLine();
                 Console.WriteLine("Use /Rollback to downgrade versions if a newer version is found");
                 Console.WriteLine();
-                Console.WriteLine("Use /Verbose to see every visual studio project file processed");
+                Console.WriteLine("Use /Verbose to see every Visual Studio project file processed");
                 Console.WriteLine("Otherwise, only projects containing package PackageName will be shown");
                 Console.WriteLine();
                 Console.WriteLine("Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2017");

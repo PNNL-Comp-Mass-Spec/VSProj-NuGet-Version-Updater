@@ -1,5 +1,8 @@
 VSProjNuGetVersionUpdater Revision History
 
+Version 1.0.6991; February 21, 2019
+	- Update packages.config files in addition to .csproj files
+
 Version 1.0.6862; October 15, 2018
 	- Add support for <PackageReference /> elements that define Version with an attribute instead of an element
 
