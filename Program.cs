@@ -25,7 +25,7 @@ namespace VSProjNuGetVersionUpdater
     /// </remarks>
     internal static class Program
     {
-        public const string PROGRAM_DATE = "February 21, 2019";
+        public const string PROGRAM_DATE = "March 6, 2019";
 
         private struct PackageUpdateOptions
         {
@@ -452,7 +452,7 @@ namespace VSProjNuGetVersionUpdater
                 mLastProgressTime = DateTime.Now;
                 mProgressNewlineRequired = false;
 
-                var success = SearchForProjectFiles(searchDirectory, baseDirectoryPath, recurse, updateOptions);
+                var success = SearchForProjectFiles(searchDirectory, baseDirectoryPath, recurse, updateOptions, out _);
 
                 return success;
             }
@@ -467,8 +467,11 @@ namespace VSProjNuGetVersionUpdater
             DirectoryInfo searchDirectory,
             string baseDirectoryPath,
             bool recurse,
-            PackageUpdateOptions updateOptions)
+            PackageUpdateOptions updateOptions,
+            out bool pathTooLong)
         {
+            var mostRecentPathLength = searchDirectory.FullName.Length;
+            pathTooLong = false;
 
             try
             {
@@ -523,9 +526,11 @@ namespace VSProjNuGetVersionUpdater
 
                 foreach (var subDirectory in searchDirectory.GetDirectories())
                 {
-                    var success = SearchForProjectFiles(subDirectory, baseDirectoryPath, true, updateOptions);
+                    mostRecentPathLength = subDirectory.FullName.Length;
 
-                    if (success)
+                    var success = SearchForProjectFiles(subDirectory, baseDirectoryPath, true, updateOptions, out pathTooLong);
+
+                    if (success || pathTooLong)
                         continue;
 
                     if (mProgressNewlineRequired)
@@ -533,11 +538,25 @@ namespace VSProjNuGetVersionUpdater
                         Console.WriteLine();
                         mProgressNewlineRequired = false;
                     }
+
                     ShowWarning("Error processing directory " + subDirectory.FullName + "; will continue searching");
                     successOverall = false;
                 }
 
                 return successOverall;
+            }
+            catch (Exception ex) when (ex is DirectoryNotFoundException || ex is PathTooLongException)
+            {
+                if (mostRecentPathLength > 240 ||
+                    ex.Message.Contains("Could not find a part of the path") && ex.Message.Length > 285)
+                {
+                    ShowWarning("Skipping directory since path length is too long:\n  " + searchDirectory.FullName);
+                    pathTooLong = true;
+                    return true;
+                }
+
+                ShowErrorMessage("Error in SearchForProjectFiles: " + ex.Message, ex);
+                return false;
             }
             catch (Exception ex)
             {
