@@ -25,7 +25,7 @@ namespace VSProjNuGetVersionUpdater
     /// </remarks>
     internal static class Program
     {
-        public const string PROGRAM_DATE = "March 6, 2019";
+        public const string PROGRAM_DATE = "Nay 7, 2019";
 
         private struct PackageUpdateOptions
         {
@@ -188,9 +188,8 @@ namespace VSProjNuGetVersionUpdater
                     if (versionAttribute == null)
                     {
                         // The package element does not have attribute version
-                        ConsoleMsgUtils.ShowWarning(string.Format(
-                                                        "package element has id=\"{0}\" but does not have version=\"x.y.z\": {1}",
-                                                        updateOptions.NuGetPackageName, packageConfigFile.FullName));
+                        ConsoleMsgUtils.ShowWarning("package element has id=\"{0}\" but does not have version=\"x.y.z\": {1}",
+                                                    updateOptions.NuGetPackageName, packageConfigFile.FullName);
                         continue;
                     }
 
@@ -671,12 +670,11 @@ namespace VSProjNuGetVersionUpdater
 
         private static void ShowDebugMessage(string message, int emptyLinesBeforeMessage = 1)
         {
-            ConsoleMsgUtils.ShowDebug(message, "  ", emptyLinesBeforeMessage);
+            ConsoleMsgUtils.ShowDebugCustom(message, emptyLinesBeforeMessage: emptyLinesBeforeMessage);
         }
 
         private static void ShowErrorMessage(string message, Exception ex = null)
         {
-
             ConsoleMsgUtils.ShowError(message, ex);
         }
 
@@ -756,8 +754,7 @@ namespace VSProjNuGetVersionUpdater
 
         private static void ShowWarning(string message, int emptyLinesBeforeMessage = 1)
         {
-
-            ConsoleMsgUtils.ShowWarning(message, emptyLinesBeforeMessage);
+            ConsoleMsgUtils.ShowWarningCustom(message, emptyLinesBeforeMessage);
         }
 
     }
