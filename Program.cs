@@ -25,7 +25,7 @@ namespace VSProjNuGetVersionUpdater
     /// </remarks>
     internal static class Program
     {
-        public const string PROGRAM_DATE = "Nay 7, 2019";
+        public const string PROGRAM_DATE = "May 9, 2019";
 
         private struct PackageUpdateOptions
         {
