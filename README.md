@@ -11,7 +11,7 @@ and you want to quickly update all of the projects to use the latest release of 
 
 ### Continuous Integration
 
-The latest versions of the executable is available on the [AppVeyor CI server](https://ci.appveyor.com/project/PNNLCompMassSpec/vsproj-nuget-version-updater/build/artifacts)
+The latest versions of the executable is available for six months on the [AppVeyor CI server](https://ci.appveyor.com/project/PNNLCompMassSpec/vsproj-nuget-version-updater/build/artifacts)
 
 [![Build status](https://ci.appveyor.com/api/projects/status/076wixks3ywuc5l6?svg=true)](https://ci.appveyor.com/project/PNNLCompMassSpec/vsproj-nuget-version-updater)
 
@@ -37,10 +37,10 @@ The latest versions of the executable is available on the [AppVeyor CI server](h
 
 Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) \
 E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov \
-Website: https://panomics.pnl.gov/ or https://omics.pnl.gov
+Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://panomics.pnnl.gov/ or https://www.pnnl.gov/integrative-omics
 
 ## License
 
-Licensed under the Apache License, Version 2.0; you may not use this file except
+Licensed under the Apache License, Version 2.0; you may not use this program except
 in compliance with the License.  You may obtain a copy of the License at
 http://www.apache.org/licenses/LICENSE-2.0
