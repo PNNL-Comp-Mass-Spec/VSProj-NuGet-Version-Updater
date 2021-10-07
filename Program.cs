@@ -18,14 +18,17 @@ namespace VSProjNuGetVersionUpdater
     /// It also updates packages.config files.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
-    ///
+    /// </para>
+    /// <para>
     /// E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov
     /// Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://panomics.pnnl.gov/ or https://www.pnnl.gov/integrative-omics
+    /// </para>
     /// </remarks>
     internal static class Program
     {
-        public const string PROGRAM_DATE = "May 9, 2019";
+        public const string PROGRAM_DATE = "October 6, 2021";
 
         private struct PackageUpdateOptions
         {
@@ -48,8 +51,7 @@ namespace VSProjNuGetVersionUpdater
 
         private static bool mProgressNewlineRequired;
 
-
-        static int Main(string[] args)
+        private static int Main()
         {
             var commandLineParse = new clsParseCommandLine();
 
@@ -68,7 +70,6 @@ namespace VSProjNuGetVersionUpdater
 
             try
             {
-
                 var success = false;
 
                 if (commandLineParse.ParseCommandLine())
@@ -88,7 +89,6 @@ namespace VSProjNuGetVersionUpdater
                 {
                     mSearchDirectoryPath = ".";
                 }
-
 
                 if (string.IsNullOrWhiteSpace(mUpdateOptions.NuGetPackageName))
                 {
@@ -114,7 +114,6 @@ namespace VSProjNuGetVersionUpdater
                 Console.WriteLine("Search complete");
 
                 Thread.Sleep(250);
-
             }
             catch (Exception ex)
             {
@@ -124,7 +123,6 @@ namespace VSProjNuGetVersionUpdater
             }
 
             return 0;
-
         }
 
         private static bool IsUpdateRequired(string currentVersion, PackageUpdateOptions updateOptions, out Version parsedVersion)
@@ -272,7 +270,6 @@ namespace VSProjNuGetVersionUpdater
                     var versionAttribute = packageRef.Attribute("Version");
                     if (versionAttribute != null)
                     {
-
                         // Found XML like this:
                         // <PackageReference Include="PRISM-Library" Version="2.4.93" />
 
@@ -315,7 +312,6 @@ namespace VSProjNuGetVersionUpdater
         /// <param name="xmlFile"></param>
         private static void UpdateEmptyXMLTagFormatting(FileSystemInfo xmlFile)
         {
-
             try
             {
                 // Reopen the file and add back line feeds to pairs of XML tags
@@ -373,13 +369,11 @@ namespace VSProjNuGetVersionUpdater
                 {
                     tempFile.Delete();
                 }
-
             }
             catch (Exception ex)
             {
                 ShowErrorMessage("Error updating XML tag formatting in file " + xmlFile.FullName + ": " + ex.Message);
             }
-
         }
 
         private static bool UpdateVersionAttributeIfRequired(XAttribute versionAttribute, PackageUpdateOptions updateOptions)
@@ -419,7 +413,6 @@ namespace VSProjNuGetVersionUpdater
             bool recurse,
             PackageUpdateOptions updateOptions)
         {
-
             try
             {
                 var newPackageVersion = Version.Parse(updateOptions.NuGetPackageVersion);
@@ -474,7 +467,6 @@ namespace VSProjNuGetVersionUpdater
 
             try
             {
-
                 var projectFiles = searchDirectory.GetFiles("*.csproj").ToList();
                 projectFiles.AddRange(searchDirectory.GetFiles("*.vbproj"));
 
@@ -619,7 +611,6 @@ namespace VSProjNuGetVersionUpdater
                     mSearchDirectoryPath = commandLineParse.RetrieveNonSwitchParameter(0);
                 }
 
-
                 if (commandLineParse.RetrieveValueForParameter("I", out var paramValue))
                 {
                     mSearchDirectoryPath = string.Copy(paramValue);
@@ -685,7 +676,6 @@ namespace VSProjNuGetVersionUpdater
 
         private static void ShowProcessingFileMessage(FileSystemInfo projectFile, string baseDirectoryPath)
         {
-
             string projectFilePath;
 
             if (!string.IsNullOrWhiteSpace(baseDirectoryPath))
@@ -743,19 +733,16 @@ namespace VSProjNuGetVersionUpdater
 
                 // Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
                 Thread.Sleep(750);
-
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Error displaying the program syntax: " + ex.Message);
             }
-
         }
 
         private static void ShowWarning(string message, int emptyLinesBeforeMessage = 1)
         {
             ConsoleMsgUtils.ShowWarningCustom(message, emptyLinesBeforeMessage);
         }
-
     }
 }
