@@ -723,7 +723,7 @@ namespace VSProjNuGetVersionUpdater
                 Console.WriteLine("Use /Verbose to see every Visual Studio project file processed");
                 Console.WriteLine("Otherwise, only projects containing package PackageName will be shown");
                 Console.WriteLine();
-                Console.WriteLine("Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2017");
+                Console.WriteLine("Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)");
                 Console.WriteLine("Version: " + GetAppVersion());
                 Console.WriteLine();
 
