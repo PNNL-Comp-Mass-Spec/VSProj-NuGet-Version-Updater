@@ -11,4 +11,7 @@ call Update_ProteinFileReader.bat NoPause
 call Update_ThermoRawFileReader.bat NoPause
 
 @echo on
+call Update_Nerdbank_Git_Versioning.bat
+
+@echo on
 call Update_UIMF-Library.bat NoPause
