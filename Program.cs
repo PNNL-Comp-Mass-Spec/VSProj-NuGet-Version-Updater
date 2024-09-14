@@ -28,7 +28,7 @@ namespace VSProjNuGetVersionUpdater
     /// </remarks>
     internal static class Program
     {
-        public const string PROGRAM_DATE = "October 6, 2021";
+        public const string PROGRAM_DATE = "September 13, 2024";
 
         private struct PackageUpdateOptions
         {
@@ -580,7 +580,7 @@ namespace VSProjNuGetVersionUpdater
 
         private static string GetAppVersion()
         {
-            return PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppVersion(PROGRAM_DATE);
+            return AppUtils.GetAppVersion(PROGRAM_DATE);
         }
 
         private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParse)
