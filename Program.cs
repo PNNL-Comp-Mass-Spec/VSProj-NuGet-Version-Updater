@@ -28,7 +28,9 @@ namespace VSProjNuGetVersionUpdater
     /// </remarks>
     internal static class Program
     {
-        public const string PROGRAM_DATE = "September 13, 2024";
+        // Ignore Spelling: Proj
+
+        public const string PROGRAM_DATE = "November 20, 2026";
 
         private struct PackageUpdateOptions
         {
@@ -546,12 +548,18 @@ namespace VSProjNuGetVersionUpdater
                     return true;
                 }
 
-                ShowErrorMessage("Error in SearchForProjectFiles: " + ex.Message, ex);
+                ShowErrorMessage("Error in SearchForProjectFiles for " + searchDirectory.FullName + ": " + ex.Message, ex);
                 return false;
             }
             catch (Exception ex)
             {
-                ShowErrorMessage("Error in SearchForProjectFiles: " + ex.Message, ex);
+                if (searchDirectory.Attributes.HasFlag(FileAttributes.ReparsePoint))
+                {
+                    ShowWarning("Skipping ReparsePoint directory since unable to access its target: " + searchDirectory.FullName);
+                    return true;
+                }
+
+                ShowErrorMessage("Error in SearchForProjectFiles for " + searchDirectory.FullName + ": " + ex.Message, ex);
                 return false;
             }
         }
